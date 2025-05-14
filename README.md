@@ -2,6 +2,8 @@
 
 # GlowUp
 
+> _This line was added in a feature branch to demonstrate PR previews and CI/CD automation._
+
 A spiritual growth application built with React, TypeScript, and Chakra UI.
 
 ## Environment Variables
