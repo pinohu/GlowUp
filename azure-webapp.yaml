@@ -1,0 +1,18 @@
+# Azure Web App for Containers deployment example
+# Replace <your-username> with your GHCR username
+
+resources:
+  - type: Microsoft.Web/sites
+    apiVersion: 2022-03-01
+    name: glowup-app
+    location: East US
+    kind: app,linux
+    properties:
+      serverFarmId: /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Web/serverfarms/<app-service-plan>
+      siteConfig:
+        appSettings:
+          - name: WEBSITES_PORT
+            value: 80
+          - name: NODE_ENV
+            value: production
+        linuxFxVersion: "DOCKER|ghcr.io/<your-username>/glowup:latest" 

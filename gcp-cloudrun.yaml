@@ -1,0 +1,17 @@
+# Google Cloud Run deployment example
+# Replace <your-username> with your GHCR username
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: glowup-app
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - image: ghcr.io/<your-username>/glowup:latest
+          env:
+            - name: NODE_ENV
+              value: production
+          ports:
+            - containerPort: 80 

@@ -1,0 +1,16 @@
+name: glowup-pr-${PR_NUMBER}
+services:
+  - name: web
+    image:
+      registry: registry.digitalocean.com/${DOCR_REGISTRY}/glowup-pr-${PR_NUMBER}:${GITHUB_SHA}
+    environment_slug: docker
+    envs:
+      - key: NODE_ENV
+        value: preview
+      - key: DB_URL
+        value: ${DB_URL}
+    http_port: 80
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: / 

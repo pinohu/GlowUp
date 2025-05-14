@@ -1,0 +1,86 @@
+name: Preview Deployments
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  deploy-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DigitalOcean
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Provision PostgreSQL DB for Preview
+        id: create_db
+        run: |
+          DB_NAME=glowup_pr_${PR_NUMBER}
+          doctl databases create $DB_NAME --engine pg --size db-s-1vcpu-1gb --num-nodes 1 --region nyc1
+          DB_CONN=$(doctl databases connection get $DB_NAME --format URI --no-header)
+          echo "DB_URL=$DB_CONN" >> $GITHUB_ENV
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t registry.digitalocean.com/${{ secrets.DOCR_REGISTRY }}/glowup-pr-${PR_NUMBER}:${GITHUB_SHA} .
+          echo ${{ secrets.DOCR_PASSWORD }} | docker login registry.digitalocean.com -u ${{ secrets.DOCR_USERNAME }} --password-stdin
+          docker push registry.digitalocean.com/${{ secrets.DOCR_REGISTRY }}/glowup-pr-${PR_NUMBER}:${GITHUB_SHA}
+
+      - name: Deploy to DigitalOcean App Platform
+        run: |
+          envsubst < .do/app-preview.yaml > .do/app-preview-resolved.yaml
+          doctl apps create --spec .do/app-preview-resolved.yaml --wait
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+          GITHUB_SHA: ${{ env.GITHUB_SHA }}
+          DOCR_REGISTRY: ${{ secrets.DOCR_REGISTRY }}
+          DB_URL: ${{ env.DB_URL }}
+
+      - name: Notify Slack (deploy)
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: '{"text":"Preview deployed for PR #${{ env.PR_NUMBER }}: ${{ github.event.pull_request.html_url }}"}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Log in to DigitalOcean
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Delete preview app
+        run: |
+          doctl apps delete glowup-pr-${PR_NUMBER} --force
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Delete PostgreSQL DB for Preview
+        run: |
+          DB_NAME=glowup_pr_${PR_NUMBER}
+          doctl databases delete $DB_NAME --force
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Notify Slack (cleanup)
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: '{"text":"Preview and DB deleted for PR #${{ env.PR_NUMBER }}."}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
