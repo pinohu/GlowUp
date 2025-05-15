@@ -1,51 +1,64 @@
 name: glowup-monitoring
 alerts:
   - name: high-cpu-usage
-    type: v1/insights/droplet/cpu
-    description: "CPU usage is above 80%"
-    threshold: 80
-    window: 5m
-    operators:
-      - greater_than
+    description: Alert when CPU usage exceeds 80%
+    condition: cpu_usage > 80
+    duration: 5m
     notifications:
-      - slack
+      - type: email
+        recipients:
+          - admin@glowup.app
 
   - name: high-memory-usage
-    type: v1/insights/droplet/memory_utilization_percent
-    description: "Memory usage is above 80%"
-    threshold: 80
-    window: 5m
-    operators:
-      - greater_than
+    description: Alert when memory usage exceeds 80%
+    condition: memory_usage > 80
+    duration: 5m
     notifications:
-      - slack
+      - type: email
+        recipients:
+          - admin@glowup.app
 
   - name: disk-space
-    type: v1/insights/droplet/disk_utilization_percent
-    description: "Disk usage is above 80%"
-    threshold: 80
-    window: 5m
-    operators:
-      - greater_than
+    description: Alert when disk space is below 20%
+    condition: disk_usage > 80
+    duration: 5m
     notifications:
-      - slack
+      - type: email
+        recipients:
+          - admin@glowup.app
 
   - name: app-health
-    type: v1/insights/app/health
-    description: "Application health check failed"
-    threshold: 0
-    window: 1m
-    operators:
-      - less_than
+    description: Alert when application health check fails
+    condition: health_check_status != 200
+    duration: 1m
     notifications:
-      - slack
+      - type: email
+        recipients:
+          - admin@glowup.app
 
-monitoring:
-  metrics:
-    - cpu
-    - memory
-    - disk
-    - network
-    - app_health
-  retention: 30d
-  interval: 1m 
+metrics:
+  - name: cpu
+    type: percentage
+    interval: 1m
+    retention: 30d
+
+  - name: memory
+    type: percentage
+    interval: 1m
+    retention: 30d
+
+  - name: disk
+    type: percentage
+    interval: 1m
+    retention: 30d
+
+  - name: network
+    type: bytes
+    interval: 1m
+    retention: 30d
+
+  - name: app_health
+    type: http
+    interval: 1m
+    retention: 30d
+    endpoint: /health 
