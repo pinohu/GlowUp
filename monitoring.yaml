@@ -1,0 +1,51 @@
+name: glowup-monitoring
+alerts:
+  - name: high-cpu-usage
+    type: v1/insights/droplet/cpu
+    description: "CPU usage is above 80%"
+    threshold: 80
+    window: 5m
+    operators:
+      - greater_than
+    notifications:
+      - slack
+
+  - name: high-memory-usage
+    type: v1/insights/droplet/memory_utilization_percent
+    description: "Memory usage is above 80%"
+    threshold: 80
+    window: 5m
+    operators:
+      - greater_than
+    notifications:
+      - slack
+
+  - name: disk-space
+    type: v1/insights/droplet/disk_utilization_percent
+    description: "Disk usage is above 80%"
+    threshold: 80
+    window: 5m
+    operators:
+      - greater_than
+    notifications:
+      - slack
+
+  - name: app-health
+    type: v1/insights/app/health
+    description: "Application health check failed"
+    threshold: 0
+    window: 1m
+    operators:
+      - less_than
+    notifications:
+      - slack
+
+monitoring:
+  metrics:
+    - cpu
+    - memory
+    - disk
+    - network
+    - app_health
+  retention: 30d
+  interval: 1m 

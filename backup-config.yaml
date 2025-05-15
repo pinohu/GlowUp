@@ -1,0 +1,18 @@
+name: glowup-db-backups
+schedule:
+  frequency: daily
+  time: "02:00"
+  timezone: "UTC"
+retention:
+  daily: 7
+  weekly: 4
+  monthly: 3
+storage:
+  type: spaces
+  region: nyc3
+notifications:
+  - slack
+  - email
+backup_type: full
+compression: true
+encryption: true 

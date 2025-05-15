@@ -1,0 +1,38 @@
+name: glowup-domain
+domain: glowup.app
+ssl:
+  type: lets_encrypt
+  auto_renew: true
+  force_ssl: true
+dns:
+  records:
+    - type: A
+      name: "@"
+      value: ${APP_IP}
+    - type: CNAME
+      name: "www"
+      value: "@"
+    - type: TXT
+      name: "@"
+      value: "v=spf1 include:_spf.google.com ~all"
+    - type: MX
+      name: "@"
+      value: "aspmx.l.google.com"
+      priority: 1
+    - type: MX
+      name: "@"
+      value: "alt1.aspmx.l.google.com"
+      priority: 5
+    - type: MX
+      name: "@"
+      value: "alt2.aspmx.l.google.com"
+      priority: 10
+headers:
+  - name: Strict-Transport-Security
+    value: "max-age=31536000; includeSubDomains"
+  - name: X-Content-Type-Options
+    value: "nosniff"
+  - name: X-Frame-Options
+    value: "SAMEORIGIN"
+  - name: X-XSS-Protection
+    value: "1; mode=block" 
