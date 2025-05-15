@@ -1,0 +1,27 @@
+name: glowup-production
+services:
+  - name: web
+    image:
+      registry: registry.digitalocean.com/${DOCR_REGISTRY}/glowup:${GITHUB_SHA}
+    environment_slug: docker
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: API_URL
+        value: ${API_URL}
+      - key: REACT_APP_GOOGLE_ANALYTICS_ID
+        value: ${GA_ID}
+      - key: DB_URL
+        value: ${DB_URL}
+    http_port: 80
+    instance_count: 2
+    instance_size_slug: basic-xs
+    routes:
+      - path: /
+    health_check:
+      http_path: /
+      initial_delay_seconds: 30
+      period_seconds: 60
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3 
